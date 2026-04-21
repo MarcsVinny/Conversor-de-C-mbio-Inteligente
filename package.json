@@ -1,0 +1,16 @@
+{
+  "name": "conversor-cambio-ads",
+  "version": "1.0.0",
+  "description": "Conversor de moedas simples para projeto acadêmico",
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "parcel build index.html"
+  },
+  "keywords": [],
+  "author": "Marco (Estudante ADS)",
+  "license": "ISC",
+  "devDependencies": {
+    "parcel": "^2.12.0",
+    "typescript": "^5.0.0"
+  }
+}

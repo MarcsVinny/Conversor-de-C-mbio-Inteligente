@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Moedas ADS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Conversor de Câmbio</h1>
+            <p>Acompanhe as cotações em tempo real</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <label for="brlInput">Valor em Reais (BRL)</label>
+                <input type="number" id="brlInput" placeholder="Digite o valor em R$..." step="0.01">
+            </section>
+
+            <div id="errorMessage" class="error-message hidden">
+                Erro ao carregar cotações. Tente novamente mais tarde.
+            </div>
+
+            <section class="cards-container">
+                <!-- Card Dólar -->
+                <div class="card" id="card-usd">
+                    <h2 class="coin-name">Dólar Americano (USD)</h2>
+                    <p class="rate">Carregando...</p>
+                    <div class="conversion-result">
+                        <span>Convertido:</span>
+                        <strong class="converted-value">--</strong>
+                    </div>
+                </div>
+
+                <!-- Card Euro -->
+                <div class="card" id="card-eur">
+                    <h2 class="coin-name">Euro (EUR)</h2>
+                    <p class="rate">Carregando...</p>
+                    <div class="conversion-result">
+                        <span>Convertido:</span>
+                        <strong class="converted-value">--</strong>
+                    </div>
+                </div>
+
+                <!-- Card Bitcoin -->
+                <div class="card" id="card-btc">
+                    <h2 class="coin-name">Bitcoin (BTC)</h2>
+                    <p class="rate">Carregando...</p>
+                    <div class="conversion-result">
+                        <span>Convertido:</span>
+                        <strong class="converted-value">--</strong>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Dados fornecidos por AwesomeAPI</p>
+        </footer>
+    </div>
+
+    <!-- Script TypeScript será processado pelo Parcel -->
+    <script src="script.ts" type="module"></script>
+</body>
+</html>
