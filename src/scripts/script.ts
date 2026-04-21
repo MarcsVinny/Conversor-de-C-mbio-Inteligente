@@ -1,29 +1,16 @@
-/**
- * Interface para representar a resposta da API AwesomeAPI
- * Cada par de moedas retorna um objeto com os dados da cotação
- */
-interface CotacaoResponse {
-    [key: string]: {
-        code: string;
-        codein: string;
-        name: string;
-        high: string;
-        low: string;
-        varBid: string;
-        pctChange: string;
-        bid: string; // Valor de compra (usado para cotação)
-        ask: string; // Valor de venda
-        timestamp: string;
-        create_date: string;
-    }
-}
+import { CotacaoResponse } from '../types/Cotacao';
 
-// Variáveis globais para armazenar as cotações atuais
+/**
+ * Módulo de conversão de câmbio
+ * Gerencia a busca de dados da API e atualização da interface
+ */
+
+// Estado global da aplicação
 let taxaUSD: number = 0;
 let taxaEUR: number = 0;
 let taxaBTC: number = 0;
 
-// Seleção de elementos do DOM
+// Elementos do DOM
 const inputBRL = document.getElementById('brlInput') as HTMLInputElement;
 const errorMessage = document.getElementById('errorMessage') as HTMLDivElement;
 
@@ -42,15 +29,18 @@ const resultBTC = document.querySelector('#card-btc .converted-value') as HTMLEl
  * @returns String formatada
  */
 function formatarMoeda(valor: number, moeda: string): string {
-    // Para Bitcoin, usamos uma formatação manual pois o símbolo ₿ é específico
     if (moeda === 'BTC') {
         return `₿ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}`;
     }
 
-    // Escolhe o local de acordo com a moeda para bater com o exemplo do professor
-    // USD -> en-US ($ 5.00)
-    // BRL -> pt-BR (R$ 5,00)
-    const locale = moeda === 'USD' ? 'en-US' : (moeda === 'EUR' ? 'de-DE' : 'pt-BR');
+    // Escolhe o locale baseado na moeda para seguir o padrão internacional
+    const localeMap: { [key: string]: string } = {
+        'USD': 'en-US',
+        'EUR': 'de-DE',
+        'BRL': 'pt-BR'
+    };
+
+    const locale = localeMap[moeda] || 'pt-BR';
 
     return new Intl.NumberFormat(locale, {
         style: 'currency',
@@ -59,71 +49,81 @@ function formatarMoeda(valor: number, moeda: string): string {
 }
 
 /**
- * Busca as cotações atuais na API e atualiza a interface
+ * Busca as cotações atuais na API AwesomeAPI
  */
 async function fetchCotacoes(): Promise<void> {
+    const URL_API = 'https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL';
+
     try {
-        const response = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL');
+        const response = await fetch(URL_API);
         
         if (!response.ok) {
-            throw new Error('Falha na requisição');
+            throw new Error('Falha ao conectar com o serviço de cotações.');
         }
 
         const data: CotacaoResponse = await response.json();
 
-        // Extraindo os valores numéricos (bid)
+        // Atribuição de taxas a partir da resposta da API
         taxaUSD = parseFloat(data.USDBRL.bid);
         taxaEUR = parseFloat(data.EURBRL.bid);
         taxaBTC = parseFloat(data.BTCBRL.bid);
 
-        // Atualizando os cards com a cotação em Real (BRL)
-        cardUSD.textContent = formatarMoeda(taxaUSD, 'BRL');
-        cardEUR.textContent = formatarMoeda(taxaEUR, 'BRL');
-        cardBTC.textContent = formatarMoeda(taxaBTC, 'BRL');
-
-        // Escondendo mensagem de erro se a busca for bem-sucedida
+        atualizarInterfaceCotacoes();
+        
         errorMessage.classList.add('hidden');
         
-        // Se houver valor no input, já converte
+        // Dispara a conversão se já houver valor no input
         if (inputBRL.value) {
             converterValores(parseFloat(inputBRL.value));
         }
 
     } catch (error) {
-        console.error('Erro ao buscar cotações:', error);
+        console.error('[Erro API]:', error);
         errorMessage.classList.remove('hidden');
     }
 }
 
 /**
- * Converte o valor de BRL para as outras moedas
- * @param valorBRL Valor digitado pelo usuário em Reais
+ * Atualiza os valores de cotação exibidos nos cards
+ */
+function atualizarInterfaceCotacoes(): void {
+    cardUSD.textContent = formatarMoeda(taxaUSD, 'BRL');
+    cardEUR.textContent = formatarMoeda(taxaEUR, 'BRL');
+    cardBTC.textContent = formatarMoeda(taxaBTC, 'BRL');
+}
+
+/**
+ * Realiza a conversão de BRL para as moedas estrangeiras
+ * @param valorBRL Valor em reais digitado pelo usuário
  */
 function converterValores(valorBRL: number): void {
     if (isNaN(valorBRL) || valorBRL <= 0) {
-        resultUSD.textContent = '--';
-        resultEUR.textContent = '--';
-        resultBTC.textContent = '--';
+        limparResultados();
         return;
     }
 
-    // Cálculos de conversão: Valor em Reais / Taxa da Moeda
     const convertidoUSD = valorBRL / taxaUSD;
     const convertidoEUR = valorBRL / taxaEUR;
     const convertidoBTC = valorBRL / taxaBTC;
 
-    // Atualizando a interface com os valores convertidos
     resultUSD.textContent = formatarMoeda(convertidoUSD, 'USD');
     resultEUR.textContent = formatarMoeda(convertidoEUR, 'EUR');
     resultBTC.textContent = formatarMoeda(convertidoBTC, 'BTC');
 }
 
 /**
- * Função de Debounce para evitar processamento excessivo durante a digitação
- * @param fn Função a ser executada
- * @param delay Atraso em milissegundos
+ * Reseta os campos de resultado da interface
  */
-function debounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
+function limparResultados(): void {
+    resultUSD.textContent = '--';
+    resultEUR.textContent = '--';
+    resultBTC.textContent = '--';
+}
+
+/**
+ * Função utilitária de debounce para otimização de performance
+ */
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
     let timeout: ReturnType<typeof setTimeout>;
     
     return (...args: Parameters<T>) => {
@@ -132,16 +132,16 @@ function debounce<T extends (...args: any[]) => any>(fn: T, delay: number) {
     };
 }
 
-// Criando a versão "debounced" da função de conversão
-const converterDebounced = debounce((valor: string) => {
+// Configuração do evento de input com debounce de 300ms
+const handleInput = debounce((valor: string) => {
     const numero = parseFloat(valor);
     converterValores(numero);
 }, 300);
 
-// Event Listeners
+// Inicialização da aplicação
 document.addEventListener('DOMContentLoaded', fetchCotacoes);
 
 inputBRL.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement;
-    converterDebounced(target.value);
+    handleInput(target.value);
 });
